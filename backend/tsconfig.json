@@ -11,6 +11,12 @@
   },
   "include": [
     "src/**/*.ts",
-    "services/**/*.ts"
+    "services/**/*.ts",
+    "../database/src/**/*.ts"
+  ],
+  "exclude": [
+    "../database/src/verify_production.ts",
+    "../database/src/seed.ts",
+    "../database/src/migrate.ts"
   ]
 }
