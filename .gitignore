@@ -2,5 +2,10 @@ node_modules/
 dist/
 .next/
 .env
+.env.*
 *.log
 drizzle/
+*.tsbuildinfo
+scratch/
+.idea/
+.vscode/
