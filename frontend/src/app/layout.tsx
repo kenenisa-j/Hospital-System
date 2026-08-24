@@ -4,7 +4,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import AppShell from '@/components/AppShell';
 
 export const metadata: Metadata = {
-    title: 'Abay General Hospital HMS',
+    title: 'Abay General Hospital | HMS',
     description: 'Hospital Management System for Abay General Hospital — ዓባይ አጠቃላይ ሆስፒታል',
 };
 
