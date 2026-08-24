@@ -9,3 +9,4 @@ drizzle/
 scratch/
 .idea/
 .vscode/
+database/src/**/*.js
