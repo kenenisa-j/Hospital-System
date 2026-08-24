@@ -182,8 +182,8 @@ export default function DoctorDashboardPage() {
                     </div>
 
                     <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center gap-3">
-                        <div className="p-3 bg-slate-100 text-sky-600 rounded-lg">
-                            <Activity className="w-5 h-5" />
+                        <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
+                            <Radio className="w-5 h-5" />
                         </div>
                         <div>
                             <p className="text-xs text-slate-500 font-medium">Pending Radiology</p>
