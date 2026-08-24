@@ -5,7 +5,7 @@
     "main": "dist/backend/src/server.js",
     "scripts": {
         "dev": "tsx watch src/server.ts",
-        "build": "tsc",
+        "build": "tsc && node -e \"const fs=require('fs');fs.cpSync('sockets','dist/backend/sockets',{recursive:true});\"",
         "start": "node dist/backend/src/server.js",
         "postinstall": "cd ../database && npm install"
     },
