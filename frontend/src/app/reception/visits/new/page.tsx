@@ -3,7 +3,7 @@
 import React, { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { getErrorMessage } from "@/lib/utils";
+import { getErrorMessage, authFetch } from "@/lib/utils";
 import {
     Ticket,
     User,
@@ -95,7 +95,7 @@ function CreateVisitPageInner() {
         }
         setSearchingPatients(true);
         try {
-            const res = await fetch(
+            const res = await authFetch(
                 `${API_BASE_URL}/api/patients?q=${encodeURIComponent(query)}`,
                 { credentials: "include", signal }
             );
@@ -121,7 +121,7 @@ function CreateVisitPageInner() {
     // 3. Auto-load preselected patient if present in URL
     useEffect(() => {
         if (preselectedPatientId) {
-            fetch(`${API_BASE_URL}/api/patients/${preselectedPatientId}`, {
+            authFetch(`${API_BASE_URL}/api/patients/${preselectedPatientId}`, {
                 credentials: "include",
             })
                 .then((res) => res.json())
@@ -140,7 +140,7 @@ function CreateVisitPageInner() {
         async function fetchDoctors() {
             setLoadingDoctors(true);
             try {
-                const res = await fetch(
+                const res = await authFetch(
                     `${API_BASE_URL}/api/doctors?department=${encodeURIComponent(formData.department)}`,
                     { credentials: "include" }
                 );
@@ -183,7 +183,7 @@ function CreateVisitPageInner() {
         setErrorMsg(null);
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/visits`, {
+            const res = await authFetch(`${API_BASE_URL}/api/visits`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",

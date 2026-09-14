@@ -44,6 +44,9 @@ export default function LoginPage() {
                 setError(data.error || 'Invalid credentials. Please try again.');
                 return;
             }
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+            }
             login(data.user);
             router.push(ROLE_REDIRECTS[data.user.role] || '/');
         } catch {

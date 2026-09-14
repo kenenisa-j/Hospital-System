@@ -77,13 +77,15 @@ router.post('/login', authRateLimiter, async (req: Request, res: Response) => {
             return res.status(401).json({ error: "Invalid email or password" });
         }
 
-        // Sign JWT Token
+        // Sign JWT Token (include department so /me never needs a DB hit)
         const token = jwt.sign(
             {
                 userId: user.id,
                 staffId: user.staffId,
+                fullName: user.fullName,
                 role: user.roleName,
                 email: user.email,
+                department: user.departmentName || 'Unassigned',
             },
             JWT_SECRET,
             { expiresIn: '8h' }
@@ -91,10 +93,11 @@ router.post('/login', authRateLimiter, async (req: Request, res: Response) => {
 
         // Set secure HTTP-only cookie
         const isLocalhost = req.headers.host?.includes('localhost') || req.headers.host?.includes('127.0.0.1');
+        const isProd = process.env.NODE_ENV === 'production' && !isLocalhost;
         res.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production' && !isLocalhost,
-            sameSite: 'lax',
+            secure: isProd,
+            sameSite: isProd ? 'none' : 'lax',
             maxAge: 8 * 60 * 60 * 1000, // 8 hours (matches typical hospital shift)
         });
 
@@ -111,6 +114,7 @@ router.post('/login', authRateLimiter, async (req: Request, res: Response) => {
 
         return res.json({
             message: "Login successful",
+            token,
             user: {
                 id: user.id,
                 staffId: user.staffId,
@@ -128,63 +132,49 @@ router.post('/login', authRateLimiter, async (req: Request, res: Response) => {
 
 router.post('/logout', (req: Request, res: Response) => {
     const isLocalhost = req.headers.host?.includes('localhost') || req.headers.host?.includes('127.0.0.1');
+    const isProd = process.env.NODE_ENV === 'production' && !isLocalhost;
     res.clearCookie('token', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production' && !isLocalhost,
-        sameSite: 'lax',
+        secure: isProd,
+        sameSite: isProd ? 'none' : 'lax',
     });
     return res.json({ message: "Logged out successfully" });
 });
 
-// 3. GET /api/auth/me (Get current authenticated user session)
-router.get('/me', async (req: Request, res: Response) => {
+// 3. GET /api/auth/me — fast path: decode JWT, no DB query needed.
+// All required fields (userId, staffId, fullName, role, email, department) are
+// embedded in the token at login time. This keeps page-load latency minimal.
+router.get('/me', (req: Request, res: Response) => {
     try {
-        const token = req.cookies?.token;
+        let token = req.cookies?.token;
+        if (!token && req.headers.authorization?.startsWith('Bearer ')) {
+            token = req.headers.authorization.split(' ')[1];
+        }
         if (!token) {
-            return res.status(401).json({ error: "Unauthorized: No token provided" });
+            return res.status(401).json({ error: 'Unauthorized: No token provided' });
         }
 
         const decoded = jwt.verify(token, JWT_SECRET) as {
             userId: string;
             staffId: string;
+            fullName: string;
             role: string;
             email: string;
+            department: string;
         };
-
-        const userList = await db
-            .select({
-                id: users.id,
-                staffId: users.staffId,
-                fullName: users.fullName,
-                email: users.email,
-                isActive: users.isActive,
-                roleName: roles.name,
-                departmentName: departments.name,
-            })
-            .from(users)
-            .innerJoin(roles, eq(users.roleId, roles.id))
-            .leftJoin(departments, eq(users.departmentId, departments.id))
-            .where(eq(users.id, decoded.userId))
-            .limit(1);
-
-        if (userList.length === 0 || !userList[0].isActive) {
-            return res.status(401).json({ error: "Session invalid or user inactive" });
-        }
-
-        const user = userList[0];
 
         return res.json({
             user: {
-                id: user.id,
-                staffId: user.staffId,
-                fullName: user.fullName,
-                email: user.email,
-                role: user.roleName,
-                department: user.departmentName || "Unassigned",
+                id: decoded.userId,
+                staffId: decoded.staffId,
+                fullName: decoded.fullName,
+                email: decoded.email,
+                role: decoded.role,
+                department: decoded.department || 'Unassigned',
             },
         });
     } catch (error) {
-        return res.status(401).json({ error: "Invalid or expired token session" });
+        return res.status(401).json({ error: 'Invalid or expired token session' });
     }
 });
 

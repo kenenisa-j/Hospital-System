@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, PlusCircle, Loader2, CheckCircle2, XCircle } from 'lucide-react';
-import { getErrorMessage } from '@/lib/utils';
+import { getErrorMessage, authFetch } from '@/lib/utils';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -46,10 +46,9 @@ export default function ReceptionRegisterPage() {
         setSubmitting(true);
         setError(null);
         try {
-            const res = await fetch(`${API_BASE_URL}/api/patients`, {
+            const res = await authFetch(`${API_BASE_URL}/api/patients`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
                 body: JSON.stringify(form),
             });
             if (res.status === 401 || res.status === 403) {
