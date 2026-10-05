@@ -63,6 +63,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 typeof window !== "undefined"
                     ? localStorage.getItem("token")
                     : null;
+
+            // If it's a demo session token or no token present
+            if (token && token.includes("demo_signature_abay_hms")) {
+                const cached = readCache();
+                if (cached) setUser(cached);
+                setLoading(false);
+                return;
+            }
+
             const headers: Record<string, string> = {};
             if (token) {
                 headers["Authorization"] = `Bearer ${token}`;
@@ -75,10 +84,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const data = await res.json();
                 setUser(data.user);
                 writeCache(data.user);
-            } else {
+            } else if (res.status === 401) {
                 // Token invalid/expired — clear cache and user
                 setUser(null);
                 writeCache(null);
+                if (typeof window !== "undefined") {
+                    localStorage.removeItem("token");
+                    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+                }
             }
         } catch {
             // Network error: keep cached user so UI stays visible offline
